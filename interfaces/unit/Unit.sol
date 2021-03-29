@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: bsl-1.1
 
-pragma solidity >=0.6.12;
+pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2;
 
 interface VaultParameters {
     // map token to stability fee percentage; 3 decimals
-    function stabilityFee(address) external view returns (uint);
+    function stabilityFee(address) external view returns (uint256);
 
     // map token to liquidation fee percentage, 0 decimals
-    function liquidationFee(address) external view returns (uint);
+    function liquidationFee(address) external view returns (uint256);
 
     // map token to USDP mint limit
-    function tokenDebtLimit(address) external view returns (uint);
+    function tokenDebtLimit(address) external view returns (uint256);
 
     // permissions to modify the Vault
     function canModifyVault(address) external view returns (bool);
@@ -20,7 +20,7 @@ interface VaultParameters {
     function isManager(address) external view returns (bool);
 
     // enabled oracle types
-    function isOracleTypeEnabled(uint, address) external view returns (bool);
+    function isOracleTypeEnabled(uint256, address) external view returns (bool);
 
     // address of the Vault
     function vault() external view returns (address payable);
@@ -28,22 +28,22 @@ interface VaultParameters {
 
 interface VaultManagerParameters {
     // determines the minimum percentage of COL token part in collateral, 0 decimals
-    function minColPercent(address) external view returns (uint);
-    
+    function minColPercent(address) external view returns (uint256);
+
     // determines the maximum percentage of COL token part in collateral, 0 decimals
-    function maxColPercent(address) external view returns (uint);
-    
+    function maxColPercent(address) external view returns (uint256);
+
     // map token to initial collateralization ratio; 0 decimals
-    function initialCollateralRatio(address) external view returns (uint);
-    
+    function initialCollateralRatio(address) external view returns (uint256);
+
     // map token to liquidation ratio; 0 decimals
-    function liquidationRatio(address) external view returns (uint);
-    
+    function liquidationRatio(address) external view returns (uint256);
+
     // map token to liquidation discount; 3 decimals
-    function liquidationDiscount(address) external view returns (uint);
-    
+    function liquidationDiscount(address) external view returns (uint256);
+
     // map token to devaluation period in blocks
-    function devaluationPeriod(address) external view returns (uint);
+    function devaluationPeriod(address) external view returns (uint256);
 }
 
 /**
@@ -56,40 +56,40 @@ interface VaultManagerParameters {
  **/
 interface UVault {
     function weth() external view returns (address payable);
-    
+
     function col() external view returns (address);
 
     function usdp() external view returns (address);
 
     // collaterals whitelist
-    function collaterals(address, address) external view returns (uint);
+    function collaterals(address, address) external view returns (uint256);
 
     // COL token collaterals
-    function colToken(address, address) external view returns (uint);
+    function colToken(address, address) external view returns (uint256);
 
     // user debts
-    function debts(address, address) external view returns (uint);
+    function debts(address, address) external view returns (uint256);
 
     // block number of liquidation trigger
-    function liquidationBlock(address, address) external view returns (uint);
+    function liquidationBlock(address, address) external view returns (uint256);
 
     // initial price of collateral
-    function liquidationPrice(address, address) external view returns (uint);
+    function liquidationPrice(address, address) external view returns (uint256);
 
     // debts of tokens
-    function tokenDebts(address) external view returns (uint);
+    function tokenDebts(address) external view returns (uint256);
 
     // stability fee pinned to each position
-    function stabilityFee(address, address) external view returns (uint);
+    function stabilityFee(address, address) external view returns (uint256);
 
     // liquidation fee pinned to each position, 0 decimals
-    function liquidationFee(address, address) external view returns (uint);
+    function liquidationFee(address, address) external view returns (uint256);
 
     // type of using oracle pinned for each position
-    function oracleType(address, address) external view returns (uint);
+    function oracleType(address, address) external view returns (uint256);
 
     // timestamp of the last update
-    function lastUpdate(address, address) external view returns (uint);
+    function lastUpdate(address, address) external view returns (uint256);
 
     /**
      * @dev Calculates the total amount of position's debt based on elapsed time
@@ -97,7 +97,10 @@ interface UVault {
      * @param user The address of a position's owner
      * @return user debt of a position plus accumulated fee
      **/
-    function getTotalDebt(address asset, address user) external view returns (uint);
+    function getTotalDebt(address asset, address user)
+        external
+        view
+        returns (uint256);
 
     /**
      * @dev Calculates the amount of fee based on elapsed time and repayment amount
@@ -106,7 +109,11 @@ interface UVault {
      * @param amount The repayment amount
      * @return fee amount
      **/
-    function calculateFee(address asset, address user, uint amount) external view returns (uint);
+    function calculateFee(
+        address asset,
+        address user,
+        uint256 amount
+    ) external view returns (uint256);
 }
 
 interface VaultManagerKeep3rMainAsset {
@@ -116,41 +123,38 @@ interface VaultManagerKeep3rMainAsset {
 
     function oracle() external view returns (address);
 
-    function ORACLE_TYPE() external view returns (uint);
+    function ORACLE_TYPE() external view returns (uint256);
 
-    function Q112() external view returns (uint);
+    function Q112() external view returns (uint256);
 
     /**
-      * @notice Cannot be used for already spawned positions
-      * @notice Token using as main collateral must be whitelisted
-      * @notice Depositing tokens must be pre-approved to vault address
-      * @notice position actually considered as spawned only when usdpAmount > 0
-      * @dev Spawns new positions
-      * @param asset The address of token using as main collateral
-      * @param mainAmount The amount of main collateral to deposit
-      * @param colAmount The amount of COL token to deposit
-      * @param usdpAmount The amount of USDP token to borrow
-      **/
+     * @notice Cannot be used for already spawned positions
+     * @notice Token using as main collateral must be whitelisted
+     * @notice Depositing tokens must be pre-approved to vault address
+     * @notice position actually considered as spawned only when usdpAmount > 0
+     * @dev Spawns new positions
+     * @param asset The address of token using as main collateral
+     * @param mainAmount The amount of main collateral to deposit
+     * @param colAmount The amount of COL token to deposit
+     * @param usdpAmount The amount of USDP token to borrow
+     **/
     function spawn(
         address asset,
-        uint mainAmount,
-        uint colAmount,
-        uint usdpAmount
-    ) external ;
+        uint256 mainAmount,
+        uint256 colAmount,
+        uint256 usdpAmount
+    ) external;
 
     /**
-      * @notice Cannot be used for already spawned positions
-      * @notice WETH must be whitelisted as collateral
-      * @notice COL must be pre-approved to vault address
-      * @notice position actually considered as spawned only when usdpAmount > 0
-      * @dev Spawns new positions using ETH
-      * @param colAmount The amount of COL token to deposit
-      * @param usdpAmount The amount of USDP token to borrow
-      **/
-    function spawn_Eth(
-        uint colAmount,
-        uint usdpAmount
-    ) external payable;
+     * @notice Cannot be used for already spawned positions
+     * @notice WETH must be whitelisted as collateral
+     * @notice COL must be pre-approved to vault address
+     * @notice position actually considered as spawned only when usdpAmount > 0
+     * @dev Spawns new positions using ETH
+     * @param colAmount The amount of COL token to deposit
+     * @param usdpAmount The amount of USDP token to borrow
+     **/
+    function spawn_Eth(uint256 colAmount, uint256 usdpAmount) external payable;
 
     /**
      * @notice Position should be spawned (USDP borrowed from position) to call this method
@@ -164,9 +168,9 @@ interface VaultManagerKeep3rMainAsset {
      **/
     function depositAndBorrow(
         address asset,
-        uint mainAmount,
-        uint colAmount,
-        uint usdpAmount
+        uint256 mainAmount,
+        uint256 colAmount,
+        uint256 usdpAmount
     ) external;
 
     /**
@@ -177,76 +181,74 @@ interface VaultManagerKeep3rMainAsset {
      * @param colAmount The amount of COL token to deposit
      * @param usdpAmount The amount of USDP token to borrow
      **/
-    function depositAndBorrow_Eth(
-        uint colAmount,
-        uint usdpAmount
-    ) external payable;
-    
+    function depositAndBorrow_Eth(uint256 colAmount, uint256 usdpAmount)
+        external
+        payable;
 
     /**
-      * @notice Tx sender must have a sufficient USDP balance to pay the debt
-      * @dev Withdraws collateral and repays specified amount of debt simultaneously
-      * @param asset The address of token using as main collateral
-      * @param mainAmount The amount of main collateral token to withdraw
-      * @param colAmount The amount of COL token to withdraw
-      * @param usdpAmount The amount of USDP token to repay
-      **/
+     * @notice Tx sender must have a sufficient USDP balance to pay the debt
+     * @dev Withdraws collateral and repays specified amount of debt simultaneously
+     * @param asset The address of token using as main collateral
+     * @param mainAmount The amount of main collateral token to withdraw
+     * @param colAmount The amount of COL token to withdraw
+     * @param usdpAmount The amount of USDP token to repay
+     **/
     function withdrawAndRepay(
         address asset,
-        uint mainAmount,
-        uint colAmount,
-        uint usdpAmount
+        uint256 mainAmount,
+        uint256 colAmount,
+        uint256 usdpAmount
     ) external;
 
     /**
-      * @notice Tx sender must have a sufficient USDP balance to pay the debt
-      * @dev Withdraws collateral and repays specified amount of debt simultaneously converting WETH to ETH
-      * @param ethAmount The amount of ETH to withdraw
-      * @param colAmount The amount of COL token to withdraw
-      * @param usdpAmount The amount of USDP token to repay
-      **/
+     * @notice Tx sender must have a sufficient USDP balance to pay the debt
+     * @dev Withdraws collateral and repays specified amount of debt simultaneously converting WETH to ETH
+     * @param ethAmount The amount of ETH to withdraw
+     * @param colAmount The amount of COL token to withdraw
+     * @param usdpAmount The amount of USDP token to repay
+     **/
     function withdrawAndRepay_Eth(
-        uint ethAmount,
-        uint colAmount,
-        uint usdpAmount
+        uint256 ethAmount,
+        uint256 colAmount,
+        uint256 usdpAmount
     ) external;
 
     /**
-      * @notice Tx sender must have a sufficient USDP and COL balances and allowances to pay the debt
-      * @dev Repays specified amount of debt paying fee in COL
-      * @param asset The address of token using as main collateral
-      * @param usdpAmount The amount of USDP token to repay
-      **/
-    function repayUsingCol(address asset, uint usdpAmount) external;
+     * @notice Tx sender must have a sufficient USDP and COL balances and allowances to pay the debt
+     * @dev Repays specified amount of debt paying fee in COL
+     * @param asset The address of token using as main collateral
+     * @param usdpAmount The amount of USDP token to repay
+     **/
+    function repayUsingCol(address asset, uint256 usdpAmount) external;
 
     /**
-      * @notice Tx sender must have a sufficient USDP and COL balances and allowances to pay the debt
-      * @dev Withdraws collateral
-      * @dev Repays specified amount of debt paying fee in COL
-      * @param asset The address of token using as main collateral
-      * @param mainAmount The amount of main collateral token to withdraw
-      * @param colAmount The amount of COL token to withdraw
-      * @param usdpAmount The amount of USDP token to repay
-      **/
+     * @notice Tx sender must have a sufficient USDP and COL balances and allowances to pay the debt
+     * @dev Withdraws collateral
+     * @dev Repays specified amount of debt paying fee in COL
+     * @param asset The address of token using as main collateral
+     * @param mainAmount The amount of main collateral token to withdraw
+     * @param colAmount The amount of COL token to withdraw
+     * @param usdpAmount The amount of USDP token to repay
+     **/
     function withdrawAndRepayUsingCol(
         address asset,
-        uint mainAmount,
-        uint colAmount,
-        uint usdpAmount
+        uint256 mainAmount,
+        uint256 colAmount,
+        uint256 usdpAmount
     ) external;
 
     /**
-      * @notice Tx sender must have a sufficient USDP and COL balances to pay the debt
-      * @dev Withdraws collateral converting WETH to ETH
-      * @dev Repays specified amount of debt paying fee in COL
-      * @param ethAmount The amount of ETH to withdraw
-      * @param colAmount The amount of COL token to withdraw
-      * @param usdpAmount The amount of USDP token to repay
-      **/
+     * @notice Tx sender must have a sufficient USDP and COL balances to pay the debt
+     * @dev Withdraws collateral converting WETH to ETH
+     * @dev Repays specified amount of debt paying fee in COL
+     * @param ethAmount The amount of ETH to withdraw
+     * @param colAmount The amount of COL token to withdraw
+     * @param usdpAmount The amount of USDP token to repay
+     **/
     function withdrawAndRepayUsingCol_Eth(
-        uint ethAmount,
-        uint colAmount,
-        uint usdpAmount
+        uint256 ethAmount,
+        uint256 colAmount,
+        uint256 usdpAmount
     ) external;
 }
 
@@ -258,7 +260,7 @@ interface VaultManagerStandard {
      * @param asset The address of token using as main collateral
      * @param mainAmount The amount of main collateral to deposit
      **/
-    function deposit(address asset, uint mainAmount) external;
+    function deposit(address asset, uint256 mainAmount) external;
 
     /**
      * @notice Token using as main collateral must be whitelisted
@@ -267,46 +269,49 @@ interface VaultManagerStandard {
     function deposit_Eth() external payable;
 
     /**
-      * @notice Tx sender must have a sufficient USDP balance to pay the debt
-      * @dev Repays specified amount of debt
-      * @param asset The address of token using as main collateral
-      * @param usdpAmount The amount of USDP token to repay
-      **/
-    function repay(address asset, uint usdpAmount) external;
+     * @notice Tx sender must have a sufficient USDP balance to pay the debt
+     * @dev Repays specified amount of debt
+     * @param asset The address of token using as main collateral
+     * @param usdpAmount The amount of USDP token to repay
+     **/
+    function repay(address asset, uint256 usdpAmount) external;
 
     /**
-      * @notice Tx sender must have a sufficient USDP balance to pay the debt
-      * @notice USDP approval is NOT needed
-      * @dev Repays total debt and withdraws collaterals
-      * @param asset The address of token using as main collateral
-      * @param mainAmount The amount of main collateral token to withdraw
-      **/
-    function repayAllAndWithdraw(
-        address asset,
-        uint mainAmount
-    ) external;
+     * @notice Tx sender must have a sufficient USDP balance to pay the debt
+     * @notice USDP approval is NOT needed
+     * @dev Repays total debt and withdraws collaterals
+     * @param asset The address of token using as main collateral
+     * @param mainAmount The amount of main collateral token to withdraw
+     **/
+    function repayAllAndWithdraw(address asset, uint256 mainAmount) external;
 
     /**
-      * @notice Tx sender must have a sufficient USDP balance to pay the debt
-      * @notice USDP approval is NOT needed
-      * @dev Repays total debt and withdraws collaterals
-      * @param ethAmount The ETH amount to withdraw
-      **/
-    function repayAllAndWithdraw_Eth(
-        uint ethAmount
-    ) external;
+     * @notice Tx sender must have a sufficient USDP balance to pay the debt
+     * @notice USDP approval is NOT needed
+     * @dev Repays total debt and withdraws collaterals
+     * @param ethAmount The ETH amount to withdraw
+     **/
+    function repayAllAndWithdraw_Eth(uint256 ethAmount) external;
 }
 
 interface ChainlinkedOracleSimple {
     function WETH() external view returns (address);
 
-    function Q112() external view returns (uint);
+    function Q112() external view returns (uint256);
 
-    function ETH_USD_DENOMINATOR() external view returns (uint);
+    function ETH_USD_DENOMINATOR() external view returns (uint256);
+
     // returns ordinary value
-    function ethToUsd(uint ethAmount) external view returns (uint);
-    // returns Q112-encoded value
-    function assetToEth(address asset, uint amount) external view returns (uint);
+    function ethToUsd(uint256 ethAmount) external view returns (uint256);
 
-    function assetToUsd(address asset, uint amount) external view returns (uint);
+    // returns Q112-encoded value
+    function assetToEth(address asset, uint256 amount)
+        external
+        view
+        returns (uint256);
+
+    function assetToUsd(address asset, uint256 amount)
+        external
+        view
+        returns (uint256);
 }

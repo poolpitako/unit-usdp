@@ -7,4 +7,3 @@ def test_revoke(gov, vault, strategy, token):
 
     assert vault.totalDebt() == 0
     assert vault.totalAssets() == token.balanceOf(vault)
-

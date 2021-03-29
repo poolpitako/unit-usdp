@@ -5,7 +5,7 @@ from brownie import config, Wei, Contract
 @pytest.fixture
 def gov(accounts):
     # ychad.eth
-    yield accounts.at('0xFEB4acf3df3cDEA7399794D0869ef76A6EfAff52', force=True)
+    yield accounts.at("0xFEB4acf3df3cDEA7399794D0869ef76A6EfAff52", force=True)
 
 
 @pytest.fixture
@@ -16,13 +16,13 @@ def rewards(gov):
 @pytest.fixture
 def guardian(accounts):
     # dev.ychad.eth
-    yield accounts.at('0x846e211e8ba920B353FB717631C015cf04061Cc9', force=True)
+    yield accounts.at("0x846e211e8ba920B353FB717631C015cf04061Cc9", force=True)
 
 
 @pytest.fixture
 def management(accounts):
     # dev.ychad.eth
-    yield accounts.at('0x846e211e8ba920B353FB717631C015cf04061Cc9', force=True)
+    yield accounts.at("0x846e211e8ba920B353FB717631C015cf04061Cc9", force=True)
 
 
 @pytest.fixture
@@ -37,16 +37,14 @@ def keeper(accounts):
 
 @pytest.fixture
 def token():
-    token_address = "[token address]"
-    yield Contract(token_address)
+    yield Contract("0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2")
 
 
 @pytest.fixture
-def amount(accounts, token, whale):
-    amount = 10_000 * 10 ** token.decimals()
+def amount(accounts, token):
+    amount = 100 * 10 ** token.decimals()
     # In order to get some funds for the token you are about to use,
     # it impersonate an exchange address to use it's funds.
-    reserve = whale
     yield amount
 
 
@@ -61,8 +59,8 @@ def vault(pm, gov, rewards, guardian, management, token):
 
 
 @pytest.fixture
-def strategy(accounts, strategist, keeper, vault, Strategy, gov):
-    strategy = strategist.deploy(Strategy, vault)
+def strategy(accounts, strategist, keeper, vault, Strategy, gov, usdp_vault):
+    strategy = strategist.deploy(Strategy, vault, usdp_vault)
     strategy.setKeeper(keeper)
     vault.addStrategy(strategy, 10_000, 0, 2 ** 256 - 1, 1_000, {"from": gov})
     yield strategy
@@ -70,23 +68,19 @@ def strategy(accounts, strategist, keeper, vault, Strategy, gov):
 
 @pytest.fixture
 def whale(accounts):
-    # binance7 wallet
-    # acc = accounts.at('0xBE0eB53F46cd790Cd13851d5EFf43D12404d33E8', force=True)
-
-    # binance8 wallet
-    #acc = accounts.at('0xf977814e90da44bfa03b6295a0616a897441acec', force=True)
-
-    # where does the whale from
-    acc = accounts.at('[whale address]', force=True)
-    yield acc
+    yield accounts.at("0x2F0b23f53734252Bda2277357e97e1517d6B042A", force=True)
 
 
 @pytest.fixture
-def usdp_vault():
-    yield Contract('[yvusdp address]')
+def usdp_vault(pm, gov, rewards, guardian, management, usdp):
+    Vault = pm(config["dependencies"][0]).Vault
+    vault = guardian.deploy(Vault)
+    vault.initialize(usdp, gov, rewards, "", "", guardian)
+    vault.setDepositLimit(2 ** 256 - 1, {"from": gov})
+    vault.setManagement(management, {"from": gov})
+    yield vault
 
 
 @pytest.fixture
 def usdp():
-    yield Contract('0x1456688345527bE1f37E9e627DA0837D6f08C925')
-
+    yield Contract("0x1456688345527bE1f37E9e627DA0837D6f08C925")

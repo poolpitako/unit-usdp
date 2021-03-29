@@ -14,10 +14,10 @@ def state_of_strategy(strategy, currency, vault):
     print("Harvest Trigger:", strategy.harvestTrigger(1000000 * 30 * 1e9))
     print("Tend Trigger:", strategy.tendTrigger(1000000 * 30 * 1e9))
     print("Emergency Exit:", strategy.emergencyExit())
-    print(f"Dai Drawn: {strategy.getTotalDebtAmount() / 1e18}")
-    print(f"Dai Underlying: {strategy.getUnderlyingDai() / 1e18}")
-    print(f"YFI Locked: {strategy.balanceOfmVault() / scale}")
-    print(f"Maker Vault Ratio: {strategy.getmVaultRatio(0) / 10_000}")
+    print(f"USDP Drawn: {strategy.getTotalDebtAmount() / 1e18}")
+    print(f"USDP Underlying: {strategy.getUnderlying() / 1e18}")
+    print(f"{vault.token()} Locked: {strategy.balanceOfCdp() / scale}")
+    print(f"Unit Vault Ratio: {strategy.getCdpRatio(0) / 10_000}")
     print(f"Draw: {strategy.shouldDraw()} ({strategy.drawAmount() / 1e18})")
     print(f"Repay: {strategy.shouldRepay()} ({strategy.repayAmount() / 1e18})")
 
@@ -39,4 +39,4 @@ def harvest_live_vault(vault):
             break
         strat = Contract(strat)
         print(f"  Harvesting Strategy {strat.name()}")
-        strat.harvest({'from': gov})
+        strat.harvest({"from": gov})
