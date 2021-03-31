@@ -72,6 +72,11 @@ def whale(accounts):
 
 
 @pytest.fixture
+def usdp_whale(accounts):
+    yield accounts.at("0x42d7025938bec20b69cbae5a77421082407f053a", force=True)
+
+
+@pytest.fixture
 def usdp_vault(pm, gov, rewards, guardian, management, usdp):
     Vault = pm(config["dependencies"][0]).Vault
     vault = guardian.deploy(Vault)

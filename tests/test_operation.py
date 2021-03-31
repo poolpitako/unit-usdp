@@ -13,6 +13,7 @@ def test_operation(
     usdp,
     usdp_vault,
     whale,
+    usdp_whale,
     gov,
     guardian,
     strategist,
@@ -44,17 +45,18 @@ def test_operation(
     # withdraw {token.symbol()}
     print(f"\n****** withdraw {token.symbol()} ******")
     print(f"whale's {token.symbol()} vault share: {vault.balanceOf(whale)/1e18}")
-    vault.withdraw(Wei("1 ether"), {"from": whale})
+    tx = vault.withdraw(Wei("1 ether"), {"from": whale})
+    assert 1 == 2
     print(f"withdraw 1 {token.symbol()} done")
     print(f"whale's {token.symbol()} vault share: {vault.balanceOf(whale)/1e18}")
 
     # transfer usdp to strategy due to rounding issue
-    usdp.transfer(strategy, Wei("1 wei"), {"from": gov})
+    usdp.transfer(strategy, Wei("1 wei"), {"from": usdp_whale})
 
     # withdraw all {token.symbol()}
     print(f"\n****** withdraw all {token.symbol()} ******")
     print(f"whale's {token.symbol()} vault share: {vault.balanceOf(whale)/1e18}")
-    vault.withdraw({"from": whale})
+    tx = vault.withdraw({"from": whale})
     print(f"withdraw all {token.symbol()}")
     print(f"whale's {token.symbol()} vault share: {vault.balanceOf(whale)/1e18}")
 

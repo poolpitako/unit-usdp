@@ -124,6 +124,11 @@ contract Strategy is BaseStrategy {
         IERC20(usdp).approve(address(yvusdp), type(uint256).max);
         IERC20(usdp).approve(address(uniswap), type(uint256).max);
         IERC20(usdp).approve(address(sushiswap), type(uint256).max);
+        // TODO: Let's discuss this approval
+        IERC20(usdp).approve(
+            address(vaultParameters.foundation()),
+            type(uint256).max
+        );
     }
 
     function name() external view override returns (string memory) {
@@ -203,6 +208,7 @@ contract Strategy is BaseStrategy {
 
     function adjustPosition(uint256 _debtOutstanding) internal override {
         _deposit();
+
         if (shouldDraw()) draw();
         else if (shouldRepay()) repay();
     }
@@ -214,20 +220,25 @@ contract Strategy is BaseStrategy {
         uint256 p = _getPrice();
         uint256 _draw = _token.mul(p).mul(c).div(DENOMINATOR).div(1e18);
         _draw = _adjustDrawAmount(_draw);
+
+        // first time
+        // Since we don't have a cdp yet, _adjustDrawAmount will return 0
+        // We need to mine something so we mine 1 wei and return
+        if (_draw == 0 && getTotalDebtAmount() == 0) {
+            cdp.spawn(address(want), _token, 0, 1);
+            yvusdp.deposit();
+            return;
+        }
+
         if (_draw == 0) {
             standard.deposit(address(want), _token);
             return;
         }
 
-        // first time
-        if (getTotalDebtAmount() == 0) {
-            cdp.spawn(address(want), _token, 0, _draw);
-            yvusdp.deposit();
-            return;
-        }
-
         cdp.depositAndBorrow(address(want), _token, 0, _draw);
-        yvusdp.deposit();
+        if (IERC20(usdp).balanceOf(address(this)) > 0) {
+            yvusdp.deposit();
+        }
     }
 
     function _getPrice() internal view returns (uint256 p) {
@@ -373,23 +384,29 @@ contract Strategy is BaseStrategy {
         }
     }
 
+    event LP(uint256 amount, uint256 balance);
+
     function liquidatePosition(uint256 _amountNeeded)
         internal
         override
         returns (uint256 _liquidatedAmount, uint256 _loss)
     {
         if (_amountNeeded == 0) return (0, 0);
+
         if (getTotalDebtAmount() != 0 && getCdpRatio(_amountNeeded) < c_safe) {
             uint256 p = _getPrice();
-            _withdrawUnderlying(_amountNeeded.mul(p).div(1e18));
+            _withdrawUnderlying(_amountNeeded.mul(p));
         }
 
+        emit LP(_amountNeeded, IERC20(usdp).balanceOf(address(this)));
         cdp.withdrawAndRepay(
             address(want),
             _amountNeeded,
             0,
             IERC20(usdp).balanceOf(address(this))
         );
+
+        emit LP(_amountNeeded, balanceOfWant());
         _liquidatedAmount = _amountNeeded;
     }
 
@@ -438,9 +455,12 @@ contract Strategy is BaseStrategy {
         if (numerator == 0) return 0;
 
         uint256 _balance = balanceOfCdp();
-        if (_balance < amount) return uint256(-1);
-        // _balance = 0;
+        if (_balance < amount) return type(uint256).max;
         else _balance = _balance.sub(amount);
+
+        if (_balance == 0) {
+            return 0;
+        }
 
         // main collateral value of the position in USD
         uint256 mainUsdValue_q112 = oracle.assetToUsd(address(want), _balance);

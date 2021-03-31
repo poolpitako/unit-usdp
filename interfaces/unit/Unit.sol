@@ -4,6 +4,9 @@ pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2;
 
 interface VaultParameters {
+    // Added by hand
+    function foundation() external view returns (address);
+
     // map token to stability fee percentage; 3 decimals
     function stabilityFee(address) external view returns (uint256);
 
@@ -27,6 +30,9 @@ interface VaultParameters {
 }
 
 interface VaultManagerParameters {
+    // Added manually
+    function vaultParameters() external view returns (address);
+
     // determines the minimum percentage of COL token part in collateral, 0 decimals
     function minColPercent(address) external view returns (uint256);
 
