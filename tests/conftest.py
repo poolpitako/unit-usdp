@@ -42,7 +42,7 @@ def token():
 
 @pytest.fixture
 def amount(accounts, token):
-    amount = 100 * 10 ** token.decimals()
+    amount = 20 * 10 ** token.decimals()
     # In order to get some funds for the token you are about to use,
     # it impersonate an exchange address to use it's funds.
     yield amount

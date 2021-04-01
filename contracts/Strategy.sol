@@ -125,10 +125,7 @@ contract Strategy is BaseStrategy {
         IERC20(usdp).approve(address(uniswap), type(uint256).max);
         IERC20(usdp).approve(address(sushiswap), type(uint256).max);
         // TODO: Let's discuss this approval
-        IERC20(usdp).approve(
-            address(vaultParameters.foundation()),
-            type(uint256).max
-        );
+        IERC20(usdp).approve(address(uVault), type(uint256).max);
     }
 
     function name() external view override returns (string memory) {
@@ -173,6 +170,10 @@ contract Strategy is BaseStrategy {
         return want.balanceOf(address(this));
     }
 
+    function balanceOfUsdp() public view returns (uint256) {
+        return IERC20(usdp).balanceOf(address(this));
+    }
+
     function balanceOfCdp() public view returns (uint256) {
         return uVault.collaterals(address(want), address(this));
     }
@@ -196,7 +197,7 @@ contract Strategy is BaseStrategy {
         uint256 d = getTotalDebtAmount();
         if (v > d) {
             _withdrawUnderlying(v.sub(d));
-            _swap(IERC20(usdp).balanceOf(address(this)));
+            _swap(balanceOfUsdp());
 
             _profit = want.balanceOf(address(this));
         }
@@ -236,7 +237,7 @@ contract Strategy is BaseStrategy {
         }
 
         cdp.depositAndBorrow(address(want), _token, 0, _draw);
-        if (IERC20(usdp).balanceOf(address(this)) > 0) {
+        if (balanceOfUsdp() > 0) {
             yvusdp.deposit();
         }
     }
@@ -377,14 +378,12 @@ contract Strategy is BaseStrategy {
         uint256 _free = repayAmount();
         if (_free > 0) {
             _withdrawUnderlying(_free);
-            standard.repay(
-                address(want),
-                IERC20(usdp).balanceOf(address(this))
-            );
+            standard.repay(address(want), balanceOfUsdp());
         }
     }
 
     event LP(uint256 amount, uint256 balance);
+    event WD(uint256 amountNeeded, uint256 fee, uint256 balance);
 
     function liquidatePosition(uint256 _amountNeeded)
         internal
@@ -393,20 +392,31 @@ contract Strategy is BaseStrategy {
     {
         if (_amountNeeded == 0) return (0, 0);
 
+        uint256 usdpAmountNeeded = 0;
+        uint256 fee = 0;
+
         if (getTotalDebtAmount() != 0 && getCdpRatio(_amountNeeded) < c_safe) {
             uint256 p = _getPrice();
-            _withdrawUnderlying(_amountNeeded.mul(p));
+            // TODO this doesn't make sense, we don't need amount of want times price
+            // That would only make sense if we can mint 100% of the collateral
+            // Here we need to calculate how much usdp we need to pay back
+            // to withdraw _amountNeeded
+            usdpAmountNeeded = _amountNeeded.mul(p);
+
+            // We need to withdraw the usdp amount needed + fees
+            fee = uVault.calculateFee(
+                address(want),
+                address(this),
+                usdpAmountNeeded
+            );
+            _withdrawUnderlying(usdpAmountNeeded.add(fee));
+            emit WD(usdpAmountNeeded, fee, balanceOfUsdp());
         }
 
-        emit LP(_amountNeeded, IERC20(usdp).balanceOf(address(this)));
-        cdp.withdrawAndRepay(
-            address(want),
-            _amountNeeded,
-            0,
-            IERC20(usdp).balanceOf(address(this))
-        );
-
-        emit LP(_amountNeeded, balanceOfWant());
+        emit LP(_amountNeeded, balanceOfUsdp());
+        // We repay the usdpAmount but we need to have more usdp balance
+        // since inside the withdrawAndRepay method they also take the fee
+        cdp.withdrawAndRepay(address(want), _amountNeeded, 0, usdpAmountNeeded);
         _liquidatedAmount = _amountNeeded;
     }
 
@@ -423,10 +433,7 @@ contract Strategy is BaseStrategy {
 
     function prepareMigration(address _newStrategy) internal override {
         yvusdp.withdraw();
-        standard.repayAllAndWithdraw(
-            address(want),
-            IERC20(usdp).balanceOf(address(this))
-        );
+        standard.repayAllAndWithdraw(address(want), balanceOfUsdp());
     }
 
     function protectedTokens()
@@ -443,7 +450,7 @@ contract Strategy is BaseStrategy {
 
     function forceRebalance(uint256 _amount) external onlyAuthorized {
         if (_amount > 0) _withdrawUnderlying(_amount);
-        standard.repay(address(want), IERC20(usdp).balanceOf(address(this)));
+        standard.repay(address(want), balanceOfUsdp());
     }
 
     function getTotalDebtAmount() public view returns (uint256) {
@@ -481,9 +488,9 @@ contract Strategy is BaseStrategy {
         uint256 _reserve = IERC20(address(yvusdp)).balanceOf(address(this));
         if (_shares > _reserve) _shares = _reserve;
 
-        uint256 _before = IERC20(usdp).balanceOf(address(this));
+        uint256 _before = balanceOfUsdp();
         yvusdp.withdraw(_shares);
-        uint256 _after = IERC20(usdp).balanceOf(address(this));
+        uint256 _after = balanceOfUsdp();
         return _after.sub(_before);
     }
 
